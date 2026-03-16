@@ -68,3 +68,96 @@ async def get_wellness_data(
                 wellness_summary += format_wellness_entry(entry) + "\n\n"
 
     return wellness_summary
+
+
+@mcp.tool()
+async def update_wellness(
+    date: str,
+    athlete_id: str | None = None,
+    api_key: str | None = None,
+    kcal_consumed: int | None = None,
+    carbohydrates: float | None = None,
+    protein: float | None = None,
+    fat_total: float | None = None,
+    weight: float | None = None,
+    resting_hr: int | None = None,
+    hrv: float | None = None,
+    sleep_secs: int | None = None,
+    sleep_quality: int | None = None,
+    soreness: int | None = None,
+    fatigue: int | None = None,
+    stress: int | None = None,
+    mood: int | None = None,
+    motivation: int | None = None,
+    comments: str | None = None,
+) -> str:
+    """Update wellness data for an athlete in Intervals.icu
+
+    Args:
+        date: Date in YYYY-MM-DD format
+        athlete_id: The Intervals.icu athlete ID (optional, will use ATHLETE_ID from .env if not provided)
+        api_key: The Intervals.icu API key (optional, will use API_KEY from .env if not provided)
+        kcal_consumed: Total calories consumed
+        carbohydrates: Carbohydrates consumed in grams
+        protein: Protein consumed in grams
+        fat_total: Total fat consumed in grams
+        weight: Body weight in kg
+        resting_hr: Resting heart rate in bpm
+        hrv: Heart rate variability
+        sleep_secs: Sleep duration in seconds
+        sleep_quality: Sleep quality score (1-5)
+        soreness: Muscle soreness (1-5)
+        fatigue: Fatigue level (1-5)
+        stress: Stress level (1-5)
+        mood: Mood (1-5)
+        motivation: Motivation (1-5)
+        comments: Free text comments
+    """
+    athlete_id_to_use, error_msg = resolve_athlete_id(athlete_id, config.athlete_id)
+    if error_msg:
+        return error_msg
+
+    # Build payload with only provided fields
+    payload: dict = {"id": date}
+    if kcal_consumed is not None:
+        payload["kcalConsumed"] = kcal_consumed
+    if carbohydrates is not None:
+        payload["carbohydrates"] = carbohydrates
+    if protein is not None:
+        payload["protein"] = protein
+    if fat_total is not None:
+        payload["fatTotal"] = fat_total
+    if weight is not None:
+        payload["weight"] = weight
+    if resting_hr is not None:
+        payload["restingHR"] = resting_hr
+    if hrv is not None:
+        payload["hrv"] = hrv
+    if sleep_secs is not None:
+        payload["sleepSecs"] = sleep_secs
+    if sleep_quality is not None:
+        payload["sleepQuality"] = sleep_quality
+    if soreness is not None:
+        payload["soreness"] = soreness
+    if fatigue is not None:
+        payload["fatigue"] = fatigue
+    if stress is not None:
+        payload["stress"] = stress
+    if mood is not None:
+        payload["mood"] = mood
+    if motivation is not None:
+        payload["motivation"] = motivation
+    if comments is not None:
+        payload["comments"] = comments
+
+    result = await make_intervals_request(
+        url=f"/athlete/{athlete_id_to_use}/wellness",
+        api_key=api_key,
+        method="PUT",
+        data=payload,
+    )
+
+    if isinstance(result, dict) and result.get("error"):
+        return f"Error updating wellness data: {result.get('message')}"
+
+    return f"Wellness data updated successfully for {date}."
