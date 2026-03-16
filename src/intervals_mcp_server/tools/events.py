@@ -46,11 +46,21 @@ def _prepare_event_data(  # pylint: disable=too-many-arguments,too-many-position
     workout_doc: WorkoutDoc | None,
     moving_time: int | None,
     distance: int | None,
+    note: bool = False,
 ) -> dict[str, Any]:
     """Prepare event data dictionary for API request.
 
     Many arguments are required to match the Intervals.icu API event structure.
+    If note=True, the event is created as a NOTE (no workout structure, shown as a calendar note).
     """
+    if note:
+        return {
+            "start_date_local": start_date + "T00:00:00",
+            "category": "NOTE",
+            "name": name,
+            "description": str(workout_doc) if workout_doc else None,
+            "type": "Note",
+        }
     resolved_workout_type = _resolve_workout_type(name, workout_type)
     return {
         "start_date_local": start_date + "T00:00:00",
@@ -289,6 +299,7 @@ async def add_or_update_event(  # pylint: disable=too-many-arguments,too-many-po
     workout_doc: WorkoutDoc | None = None,
     moving_time: int | None = None,
     distance: int | None = None,
+    note: bool = False,
 ) -> str:
     """Post event for an athlete to Intervals.icu this follows the event api from intervals.icu
     If event_id is provided, the event will be updated instead of created.
@@ -305,6 +316,7 @@ async def add_or_update_event(  # pylint: disable=too-many-arguments,too-many-po
         workout_type: Workout type (e.g. Ride, Run, Swim, Walk, Row)
         moving_time: Total expected moving time of the workout in seconds (optional)
         distance: Total expected distance of the workout in meters (optional)
+        note: If True, creates the event as a NOTE (calendar note, no workout structure) instead of a WORKOUT
 
     Example:
         "workout_doc": {
@@ -364,7 +376,7 @@ async def add_or_update_event(  # pylint: disable=too-many-arguments,too-many-po
 
     try:
         event_data = _prepare_event_data(
-            name, workout_type, start_date, workout_doc, moving_time, distance
+            name, workout_type, start_date, workout_doc, moving_time, distance, note
         )
         return await _create_or_update_event_request(
             athlete_id_to_use, api_key, event_data, start_date, event_id
