@@ -399,6 +399,69 @@ def format_custom_item_details(item: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def format_search_result(activity: Any) -> str:
+    """Format a search result activity into a readable string.
+    
+    Args:
+        activity: Activity object from search results (can be dict or Activity dataclass)
+    
+    Returns:
+        A formatted string representation of the activity
+    """
+    # Handle both dict and Activity dataclass
+    if hasattr(activity, 'id'):
+        # It's a dataclass with attributes
+        activity_id = activity.id
+        activity_name = activity.name
+        activity_type = activity.type
+        activity_date = activity.start_date
+    else:
+        # It's a dict
+        activity_id = activity.get('id', 'N/A')
+        activity_name = activity.get('name', 'Unnamed')
+        activity_type = activity.get('type', 'Unknown')
+        activity_date = activity.get('start_date', activity.get('startTime', 'Unknown'))
+    
+    return f"{activity_date} - {activity_name} ({activity_type}) [ID: {activity_id}]"
+
+
+def format_season_summary(event: Any) -> str:
+    """Format a season event into a readable string.
+    
+    Args:
+        event: Event object representing a season (can be dict or EventResponse dataclass)
+    
+    Returns:
+        A formatted string representation of the season
+    """
+    # Handle both dict and EventResponse dataclass
+    if hasattr(event, 'start_date_local'):
+        # It's a dataclass with attributes
+        event_id = event.id
+        event_name = event.name
+        start_date = event.start_date_local
+        end_date = event.end_date_local
+        description = event.description
+        color = event.color
+    else:
+        # It's a dict
+        event_id = event.get('id', 'N/A')
+        event_name = event.get('name', 'Unnamed Season')
+        start_date = event.get('start_date_local', event.get('date', 'Unknown'))
+        end_date = event.get('end_date_local', 'N/A')
+        description = event.get('description', 'N/A')
+        color = event.get('color', 'N/A')
+    
+    result = f"""Season: {event_name}
+ID: {event_id}
+Start Date: {start_date}
+End Date: {end_date}
+Description: {description}
+Color: {color}"""
+    
+    return result
+
+
 def format_intervals(intervals_data: dict[str, Any]) -> str:
     """Format intervals data into a readable string with all available fields.
 
